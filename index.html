@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2557d6">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>Academic Deadline Coordination System</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+--bg:#f4f6fa;--card:#fff;--tx:#1b2230;--mu:#5a6579;--bd:#d8deea;--ac:#2557d6;--on:#fff;--wn:#9a5b00;--wb:#fff3dc;--bad:#b42318;--bb:#fde8e6;--ok:#17703f;--ob:#e3f6ea}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10141c;--card:#1a202b;--tx:#e8ecf4;--mu:#9aa5b8;--bd:#2c3547;--ac:#6c95ff;--on:#0b1020;--wn:#ffc46b;--wb:#3a2b10;--bad:#ff8f84;--bb:#3b1815;--ok:#6ddc9a;--ob:#12301f}}
+:root[data-theme="dark"]{--bg:#10141c;--card:#1a202b;--tx:#e8ecf4;--mu:#9aa5b8;--bd:#2c3547;--ac:#6c95ff;--on:#0b1020;--wn:#ffc46b;--wb:#3a2b10;--bad:#ff8f84;--bb:#3b1815;--ok:#6ddc9a;--ob:#12301f}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{background:var(--card);border-bottom:1px solid var(--bd);padding:12px 16px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+h1{font-size:17px;margin:0}h2{font-size:16px;margin:0 0 10px}h3{font-size:14px;margin:14px 0 6px}
+main{max-width:980px;margin:0 auto;padding:16px}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:14px;margin-bottom:14px}
+.grid{display:grid;gap:14px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))}
+label{display:block;font-size:13px;color:var(--mu);margin:8px 0 3px}
+input,select,button{font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--bd);border-radius:8px;padding:8px 10px;width:100%}
+button{width:auto;cursor:pointer;background:var(--ac);color:var(--on);border:0;font-weight:600}
+button.g{background:transparent;color:var(--ac);border:1px solid var(--bd)}
+button.d{background:transparent;color:var(--bad);border:1px solid var(--bd)}
+button.s{padding:4px 9px;font-size:13px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.mu{color:var(--mu);font-size:13px}
+.tag{display:inline-block;font-size:12px;padding:1px 8px;border-radius:99px;background:var(--bg);border:1px solid var(--bd)}
+.warn{background:var(--wb);color:var(--wn);border:1px solid var(--wn);border-radius:8px;padding:10px;margin:10px 0}
+.ok{background:var(--ob);color:var(--ok);border-radius:8px;padding:8px 10px;margin:10px 0}
+.item{display:flex;justify-content:space-between;gap:10px;padding:9px 0;border-top:1px solid var(--bd);align-items:center}
+.item:first-of-type{border-top:0}
+.cal{display:grid;grid-template-columns:repeat(7,1fr);gap:3px}
+.cal b{font-size:12px;text-align:center;color:var(--mu)}
+.day{min-height:62px;border:1px solid var(--bd);border-radius:6px;padding:3px;font-size:11px;overflow:hidden}
+.day.t{border-color:var(--ac);border-width:2px}.day.x{opacity:.4}.day.c{background:var(--bb)}
+.day i{display:block;font-style:normal;background:var(--ac);color:var(--on);border-radius:3px;padding:0 3px;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.bar{height:10px;background:var(--bg);border:1px solid var(--bd);border-radius:6px;overflow:hidden;flex:1;min-width:80px}
+.bar span{display:block;height:100%;background:var(--ok)}.bar.h span{background:var(--bad)}
+.note{padding:8px 0;border-top:1px solid var(--bd);font-size:14px}
+.note.n::before{content:"●";color:var(--ac);margin-right:6px}
+.cancel{text-decoration:line-through;opacity:.6}
+.login{max-width:380px;margin:40px auto}
+.bell{position:relative;display:inline-block}.badge{background:var(--bad);color:#fff;border-radius:99px;font-size:11px;padding:0 6px;margin-left:4px}
+.panel{position:absolute;right:0;top:115%;width:min(340px,88vw);background:var(--card);border:1px solid var(--bd);border-radius:12px;padding:10px;z-index:5;box-shadow:0 6px 24px rgba(0,0,0,.25)}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(20px + env(safe-area-inset-bottom,0px));background:var(--ac);color:var(--on);padding:10px 16px;border-radius:10px;z-index:9;max-width:90vw;font-weight:600}
+</style>
+</head>
+<body>
+<header><h1>📅 Academic Deadline Coordination System</h1><div id="who" class="row"></div></header>
+<main id="app"></main>
+<script>
+const DAYMAX=2, WEEKMAX=4, KEY='adcs-prototype-v1';
+const $=s=>document.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const pad=n=>String(n).padStart(2,'0');
+const iso=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const P=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const add=(s,n)=>{const d=P(s);d.setDate(d.getDate()+n);return iso(d)};
+const wk=s=>add(s,-((P(s).getDay()+6)%7));
+const fmt=s=>P(s).toLocaleDateString('en-PH',{weekday:'short',month:'short',day:'numeric'});
+const today=iso(new Date()), W=wk(today);
+
+const users={i1:{n:'Prof. Santos',r:'instructor'},i2:{n:'Prof. Reyes',r:'instructor'},
+ s1:{n:'Ana Cruz',r:'student',sec:'BSIT 2-A'},s2:{n:'Ben Lopez',r:'student',sec:'BSIT 1-A'},c1:{n:'Program Coordinator',r:'coordinator'}};
+const sections=['BSIT 1-A','BSIT 2-A'];
+const subjects=[{id:'a',n:'Web Systems',ins:'i1',sec:'BSIT 2-A'},{id:'b',n:'Database Management',ins:'i2',sec:'BSIT 2-A'},
+ {id:'c',n:'Networking 1',ins:'i1',sec:'BSIT 2-A'},{id:'d',n:'Programming 1',ins:'i2',sec:'BSIT 1-A'}];
+
+function seed(){let id=0;const D=(s,t,o)=>({id:'d'+(++id),sub:s,t,date:add(W,o),canceled:false});
+ return{deadlines:[D('a','Project proposal',2),D('b','ER diagram',2),D('c','Lab report',2),D('a','Quiz 2',4),D('b','Midterm exam',10),D('d','Activity 3',3)],
+ notes:[{id:1,sec:'BSIT 2-A',msg:'New deadline: Web Systems: Project proposal, due '+fmt(add(W,2))+'.',ts:Date.now()},{id:2,sec:'BSIT 2-A',to:'coord',msg:'Crowded day: 3 deadlines on '+fmt(add(W,2))+' in BSIT 2-A.',ts:Date.now()}],seen:{},next:100}}
+let S;try{S=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+if(!S||!S.deadlines)S=seed();
+const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
+let me=null,edit=null,bellOpen=false,warn=null,month=today.slice(0,7),secSel=sections[1],flash='';
+
+const sub=id=>subjects.find(x=>x.id===id);
+const live=sec=>S.deadlines.filter(d=>!d.canceled&&sub(d.sub).sec===sec);
+function check(sec,date,ex){const L=live(sec).filter(d=>d.id!==ex);const m=[];
+ const dc=L.filter(d=>d.date===date).length, wc=L.filter(d=>wk(d.date)===wk(date)).length;
+ if(dc>=DAYMAX)m.push(`${sec} already has ${dc} deadlines on ${fmt(date)}.`);
+ if(wc>=WEEKMAX)m.push(`${sec} already has ${wc} deadlines in the week of ${fmt(wk(date))}.`);return m}
+function notify(sec,msg,to){S.notes.unshift({id:S.next++,sec,msg,to,ts:Date.now()});save()}
+const mineNotes=()=>S.notes.filter(n=>me.r==='coordinator'?n.to==='coord':me.r==='student'&&n.sec===me.sec&&n.to!=='coord');
+const unread=()=>mineNotes().filter(n=>n.id>(S.seen[me.id]||0)).length;
+function toast(m){const t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),4000)}
+
+function login(){$('#who').innerHTML='';
+ $('#app').innerHTML=`<div class="card login"><h2>Sign in</h2><p class="mu">Demo accounts, no password needed. Data stays in this browser.</p>
+ <label>Account</label><select id="u">${Object.entries(users).map(([k,u])=>`<option value="${k}">${u.n} (${u.r}${u.sec?', '+u.sec:''})</option>`).join('')}</select>
+ <p><button data-a="in">Log in</button></p></div>`}
+
+function head(){const u=unread(),N=mineNotes().slice(0,6),sn=S.seen[me.id]||0;
+ $('#who').innerHTML=`<span class="mu">${esc(me.n)} · ${me.r}</span>${me.r==='instructor'?'':`<span class="bell"><button class="g s" data-a="bell">🔔${u?`<span class="badge">${u}</span>`:''}</button>${bellOpen?`<div class="panel"><div class="row" style="justify-content:space-between"><b>Notifications</b><button class="g s" data-a="read">Mark all read</button></div>${N.map(n=>`<div class="note ${n.id>sn?'n':''}">${esc(n.msg)}</div>`).join('')||'<p class="mu">No notifications yet.</p>'}</div>`:''}</span>`}<button class="g s" data-a="out">Log out</button>`}
+
+function instructor(){const mine=subjects.filter(s=>s.ins===me.id);const e=edit&&S.deadlines.find(d=>d.id===edit);
+ const list=S.deadlines.filter(d=>mine.some(s=>s.id===d.sub)).sort((a,b)=>a.date.localeCompare(b.date));
+ return`<div class="grid"><div class="card"><h2>${e?'Edit deadline':'Post a deadline'}</h2>
+ <label>Subject and section</label><select id="f-sub">${mine.map(s=>`<option value="${s.id}" ${e&&e.sub===s.id?'selected':''}>${esc(s.n)} — ${s.sec}</option>`).join('')}</select>
+ <label>Requirement</label><input id="f-t" value="${e?esc(e.t):''}" placeholder="e.g. Quiz 3, Final project">
+ <label>Due date</label><input id="f-d" type="date" value="${e?e.date:add(today,7)}">
+ ${warn?`<div class="warn"><b>Crowded date.</b><br>${warn.map(esc).join('<br>')}<br><span class="mu">Pick another date, or post anyway.</span><p><button class="s" data-a="force">Post anyway</button></p></div>`:''}
+ <p class="row"><button data-a="save">${e?'Save changes':'Post deadline'}</button>${e?'<button class="g" data-a="noedit">Cancel edit</button>':''}</p>${flash?`<div class="ok">${esc(flash)}</div>`:''}</div>
+ <div class="card"><h2>My deadlines</h2>${list.map(d=>`<div class="item"><div class="${d.canceled?'cancel':''}"><b>${esc(d.t)}</b><br><span class="mu">${esc(sub(d.sub).n)} · ${sub(d.sub).sec} · ${fmt(d.date)}${d.canceled?' · canceled':''}</span></div>
+ ${d.canceled?'':`<div class="row"><button class="g s" data-a="edit" data-i="${d.id}">Edit</button><button class="d s" data-a="cancel" data-i="${d.id}">Cancel</button></div>`}</div>`).join('')||'<p class="mu">No deadlines yet.</p>'}</div></div>`}
+
+function calendar(sec){const[y,m]=month.split('-').map(Number);const first=iso(new Date(y,m-1,1));const start=wk(first);const L=live(sec);
+ let cells='';for(let i=0;i<42;i++){const ds=add(start,i);const inM=ds.slice(0,7)===month;const dl=L.filter(d=>d.date===ds);
+  cells+=`<div class="day ${ds===today?'t':''} ${inM?'':'x'} ${dl.length>DAYMAX?'c':''}">${+ds.slice(8)}${dl.slice(0,2).map(d=>`<i title="${esc(sub(d.sub).n+': '+d.t)}">${esc(d.t)}</i>`).join('')}${dl.length>2?`<span class="mu">+${dl.length-2} more</span>`:''}</div>`}
+ const name=new Date(y,m-1,1).toLocaleDateString('en-US',{month:'long',year:'numeric'});
+ return`<div class="row" style="justify-content:space-between;margin-bottom:8px"><button class="g s" data-a="mo" data-i="-1">‹</button><b>${name}</b><button class="g s" data-a="mo" data-i="1">›</button></div>
+ <div class="cal">${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(x=>`<b>${x}</b>`).join('')}${cells}</div>`}
+
+function student(){const sec=me.sec,L=live(sec).sort((a,b)=>a.date.localeCompare(b.date));
+ const wkL=L.filter(d=>wk(d.date)===W);const soon=L.filter(d=>d.date>=today&&d.date<=add(today,2));
+ const N=mineNotes();const seen=S.seen[me.id]||0;
+ return`<div class="grid"><div class="card"><h2>${sec} calendar</h2>${calendar(sec)}</div><div>
+ ${soon.length?`<div class="warn"><b>Reminder.</b> ${soon.map(d=>`${esc(d.t)} (${esc(sub(d.sub).n)}) is due ${d.date===today?'today':fmt(d.date)}`).join('; ')}.</div>`:''}
+ <div class="card"><h2>Due this week</h2>${wkL.map(d=>`<div class="item"><div><b>${esc(d.t)}</b><br><span class="mu">${esc(sub(d.sub).n)}</span></div><span class="tag">${fmt(d.date)}</span></div>`).join('')||'<p class="mu">Nothing due this week.</p>'}</div>
+ <div class="card"><div class="row" style="justify-content:space-between"><h2>Notifications</h2><button class="g s" data-a="read">Mark all read</button></div>
+ ${N.map(n=>`<div class="note ${n.id>seen?'n':''}">${esc(n.msg)}<br><span class="mu">${new Date(n.ts).toLocaleString()}</span></div>`).join('')||'<p class="mu">No notifications yet.</p>'}</div></div></div>`}
+
+function coordinator(){const L=live(secSel);let rows='';
+ for(let i=0;i<6;i++){const w=add(W,i*7),c=L.filter(d=>wk(d.date)===w).length,h=c>WEEKMAX;
+  rows+=`<div class="item"><span style="min-width:110px">Week of ${fmt(w)}</span><div class="bar ${h?'h':''}"><span style="width:${Math.min(100,c/WEEKMAX*100)}%"></span></div><b style="min-width:70px;text-align:right">${c} due${h?' ⚠':''}</b></div>`}
+ const days={};L.forEach(d=>(days[d.date]=days[d.date]||[]).push(d));
+ const cf=Object.entries(days).filter(([,a])=>a.length>DAYMAX).sort();
+ return`<div class="card"><div class="row"><h2 style="margin:0">Workload overview</h2><select id="sec" style="width:auto">${sections.map(s=>`<option ${s===secSel?'selected':''}>${s}</option>`).join('')}</select></div>
+ <p class="mu">A week above ${WEEKMAX} deadlines, or a day above ${DAYMAX}, is marked crowded.</p>${rows}</div>
+ <div class="grid"><div class="card"><h2>Deadline conflicts</h2>${cf.map(([d,a])=>`<div class="warn"><b>${fmt(d)}</b>: ${a.length} deadlines<br>${a.map(x=>esc(sub(x.sub).n+' – '+x.t)).join('<br>')}<br><span class="mu">Ask the instructors to reschedule one of them.</span></div>`).join('')||'<p class="ok">No crowded days.</p>'}</div>
+ <div class="card"><h2>${secSel} calendar</h2>${calendar(secSel)}</div></div>`}
+
+function render(){if(!me)return login();head();$('#app').innerHTML=me.r==='instructor'?instructor():me.r==='student'?student():coordinator()}
+
+function post(force){const subId=$('#f-sub').value,t=$('#f-t').value.trim(),date=$('#f-d').value;
+ if(!t||!date){flash='';warn=null;alert('Please enter the requirement and the due date.');return}
+ const sec=sub(subId).sec;const over=check(sec,date,edit),m=force?[]:over;
+ if(m.length){warn=m;flash='';return render()}
+ const label=`${sub(subId).n}: ${t}`;
+ if(edit){const d=S.deadlines.find(x=>x.id===edit);const moved=d.date!==date;Object.assign(d,{sub:subId,t,date});
+  notify(sec,`Updated: ${label}${moved?' is now due '+fmt(date):''}.`);flash='Deadline updated and the section was notified.'}
+ else{S.deadlines.push({id:'d'+(S.next++),sub:subId,t,date,canceled:false});notify(sec,`New deadline: ${label}, due ${fmt(date)}.`);flash='Deadline posted and the section was notified.'}
+ if(over.length)notify(sec,`Crowded date posted: ${label} on ${fmt(date)}. ${over[0]}`,'coord');
+ toast('🔔 Notification sent to '+sec);edit=null;warn=null;save();render()}
+
+document.addEventListener('click',e=>{const b=e.target.closest('[data-a]');if(!b)return;const a=b.dataset.a,i=b.dataset.i;
+ if(a==='in'){const k=$('#u').value;me={id:k,...users[k]};edit=null;warn=null;flash='';bellOpen=false;render();if(me.r!=='instructor'&&unread())toast('🔔 You have '+unread()+' new notification(s)')}
+ else if(a==='out'){me=null;render()}
+ else if(a==='save')post(false);else if(a==='force')post(true);
+ else if(a==='edit'){edit=i;warn=null;flash='';render()}
+ else if(a==='noedit'){edit=null;warn=null;render()}
+ else if(a==='cancel'){const d=S.deadlines.find(x=>x.id===i);d.canceled=true;notify(sub(d.sub).sec,`Canceled: ${sub(d.sub).n}: ${d.t}.`);flash='Deadline canceled.';toast('🔔 Notification sent to '+sub(d.sub).sec);render()}
+ else if(a==='mo'){const[y,m]=month.split('-').map(Number);const n=new Date(y,m-1+Number(i),1);month=n.getFullYear()+'-'+pad(n.getMonth()+1);render()}
+ else if(a==='bell'){bellOpen=!bellOpen;render()}
+ else if(a==='read'){S.seen[me.id]=S.next;save();render()}});
+document.addEventListener('change',e=>{if(e.target.id==='sec'){secSel=e.target.value;render()}});
+render();
+try{if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js')}catch(e){}
+</script>
+</body>
+</html>
